@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <textarea rows="50" cols="200" id="mainbody"></textarea>
+        <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+        <script>
+            const socket = io('localhost:3000')
+            const txtArea = document.getElementById('mainbody')
+            let docId = ''
+            let interval = null;
+
+            window.addEventListener('load', async function (e) {
+                    const locationArray = window.location.href.split('/')
+                    if(locationArray.length > 2){
+                        docId = locationArray[locationArray.length - 1]
+                    }
+                    if(docId == '')
+                    {
+                        const response = await fetch(`http://localhost:3001/document`, {method: 'POST'})
+                        const json = await response.json()
+                        docId = json.documentId
+                        window.location = `${window.location}${json.documentId}`
+                    }
+                    else
+                    {
+                        socket.emit('JoinDocument', docId);
+                    }
+            })
+
+            txtArea.addEventListener('keyup', function(e) {
+                //interval = setTimeout(() => socket.emit('UpdateDocument', {htmlText: txtArea.value, documentId: docId}), 3000)
+                socket.emit('UpdateDocument', {htmlText: txtArea.value, documentId: docId})
+            })
+
+            socket.on('DocumentUpdated', function(msg){
+                txtArea.value = msg.htmlText
+            })
+        </script>
+    </body>
+</html>
